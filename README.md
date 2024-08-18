@@ -12,6 +12,8 @@ Dispersion Values Map is designed to evaluate all possible dispersion parameters
 
 In OCT systems, dispersion mismatch broadens the peaks in an A-scan. Numerical dispersion compensation improves axial resolution but conserves the overall energy. This means that the peak width is narrowed and the peak height is maximized.  
 
+__Important Note: This plugin is highly experimental and generating a dispersion value plot may take a significant amount of time. Use it at your own risk.__
+
 ## License
 
 This project is licensed under the GPLv3 License. For more details, see the [LICENSE](LICENSE) file.
