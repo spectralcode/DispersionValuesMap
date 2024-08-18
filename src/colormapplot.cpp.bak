@@ -1,0 +1,72 @@
+#include "ColorMapPlot.h"
+
+ColorMapPlot::ColorMapPlot(QWidget *parent) : QWidget(parent)
+{
+	QVBoxLayout *layout = new QVBoxLayout(this);
+	this->plot = new QCustomPlot();
+	layout->addWidget(this->plot);
+	this->statusLabel = new QLabel("Hover over points to see values");
+	layout->addWidget(this->statusLabel);
+
+	this->setupPlot();
+	this->setupContextMenu();
+
+	connect(this->plot, &QCustomPlot::mouseMove, this, &ColorMapPlot::showPointToolTip);
+}
+
+void ColorMapPlot::setupPlot()
+{
+	this->colorMap = new QCPColorMap(this->plot->xAxis, this->plot->yAxis);
+	this->colorScale = new QCPColorScale(this->plot);
+	this->plot->plotLayout()->addElement(0, 1, this->colorScale);
+	
+	this->plot->xAxis->setLabel("d2");
+	this->plot->yAxis->setLabel("d3");
+	this->colorScale->setLabel("Value");
+	
+	this->colorMap->setColorScale(this->colorScale);
+	this->colorMap->setGradient(QCPColorGradient::gpPolar);
+	this->colorMap->rescaleDataRange(true);
+	this->plot->rescaleAxes();
+}
+
+void ColorMapPlot::setupContextMenu()
+{
+	this->plot->setContextMenuPolicy(Qt::CustomContextMenu);
+	connect(this->plot, &QCustomPlot::customContextMenuRequested, this, &ColorMapPlot::contextMenuRequest);
+}
+
+void ColorMapPlot::addValueToPlot(qreal x, qreal y, double value)
+{
+	this->colorMap->data()->setCell(x, y, value);
+}
+
+void ColorMapPlot::rescaleAndReplot()
+{
+	this->colorMap->rescaleDataRange();
+	this->plot->replot();
+}
+
+void ColorMapPlot::showPointToolTip(QMouseEvent *event)
+{
+	int xKey = this->plot->xAxis->pixelToCoord(event->pos().x());
+	int yKey = this->plot->yAxis->pixelToCoord(event->pos().y());
+	double value = this->colorMap->data()->cell(xKey, yKey);
+	this->statusLabel->setText(QString("d2: %1, d3: %2, Value: %3").arg(xKey).arg(yKey).arg(value));
+}
+
+void ColorMapPlot::contextMenuRequest(QPoint pos)
+{
+	QMenu *menu = new QMenu(this);
+	menu->addAction("Save as PNG", this, [&](){
+		QString fileName = QFileDialog::getSaveFileName(this, "Save Plot", "", "PNG Image (*.png)");
+		if (!fileName.isEmpty())
+			this->plot->savePng(fileName);
+	});
+	menu->addAction("Save as PDF", this, [&](){
+		QString fileName = QFileDialog::getSaveFileName(this, "Save Plot", "", "PDF Document (*.pdf)");
+		if (!fileName.isEmpty())
+			this->plot->savePdf(fileName);
+	});
+	menu->popup(this->plot->mapToGlobal(pos));
+}
